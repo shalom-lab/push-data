@@ -37,23 +37,30 @@ jobs:
             "description": "Push data to GitHub repository with customizable templates",
             "permissions": [
               "storage",
-              "activeTab"
+              "sidePanel"
             ],
             "host_permissions": [
               "https://api.github.com/*"
             ],
             "action": {
-              "default_popup": "popup.html",
+              "default_title": "GitHub Data Push",
               "default_icon": {
                 "16": "icons/icon16.png",
                 "48": "icons/icon48.png",
                 "128": "icons/icon128.png"
               }
             },
+            "side_panel": {
+              "default_path": "popup.html",
+              "default_width": 500
+            },
             "icons": {
               "16": "icons/icon16.png",
               "48": "icons/icon48.png",
               "128": "icons/icon128.png"
+            },
+            "background": {
+              "service_worker": "background.js"
             }
           }
           EOL
@@ -72,11 +79,11 @@ jobs:
             },
             "permissions": [
               "storage",
-              "activeTab",
               "https://api.github.com/*"
             ],
-            "browser_action": {
-              "default_popup": "popup.html",
+            "sidebar_action": {
+              "default_title": "GitHub Data Push",
+              "default_panel": "popup.html",
               "default_icon": {
                 "16": "icons/icon16.png",
                 "48": "icons/icon48.png",
@@ -87,6 +94,9 @@ jobs:
               "16": "icons/icon16.png",
               "48": "icons/icon48.png",
               "128": "icons/icon128.png"
+            },
+            "background": {
+              "scripts": ["background.js"]
             }
           }
           EOL
@@ -95,7 +105,7 @@ jobs:
         run: |
           echo "Building Chrome extension..."
           mkdir -p dist/chrome
-          cp -r popup.* i18n.js icons styles.css dist/chrome/
+          cp -r popup.* i18n.js icons styles.css background.js dist/chrome/
           cp manifest.chrome.json dist/chrome/manifest.json
           cd dist/chrome
           zip -r ../chrome.zip .
@@ -104,7 +114,7 @@ jobs:
         run: |
           echo "Building Firefox extension..."
           mkdir -p dist/firefox
-          cp -r popup.* i18n.js icons styles.css dist/firefox/
+          cp -r popup.* i18n.js icons styles.css background.js dist/firefox/
           cp manifest.firefox.json dist/firefox/manifest.json
           cd dist/firefox
           web-ext build --artifacts-dir ../ --overwrite-dest
