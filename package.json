@@ -1,0 +1,29 @@
+{
+  "name": "github-data-push",
+  "version": "1.0.0",
+  "description": "Push data to GitHub repository with customizable templates",
+  "private": true,
+  "scripts": {
+    "build": "echo 'No build step required'",
+    "test": "echo 'No test specified'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yourusername/push-data.git"
+  },
+  "keywords": [
+    "github",
+    "chrome-extension",
+    "firefox-addon",
+    "data-management"
+  ],
+  "author": "",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/yourusername/push-data/issues"
+  },
+  "homepage": "https://github.com/yourusername/push-data#readme",
+  "devDependencies": {
+    "web-ext": "^7.11.0"
+  }
+} 
