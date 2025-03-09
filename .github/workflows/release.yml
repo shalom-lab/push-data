@@ -165,14 +165,14 @@ jobs:
             ### 📦 下载说明 / Download Instructions
             
             #### Chrome/Edge:
-            1. 下载 `chrome.zip`
+            1. 下载 `github_data_push-[版本号]-chrome.zip`
             2. 访问 `chrome://extensions`
             3. 开启"开发者模式"
             4. 点击"加载已解压的扩展程序"
             5. 选择解压后的文件夹
             
             #### Firefox:
-            1. 下载 `.xpi` 文件
+            1. 下载 `github_data_push-[版本号]-firefox.xpi`
             2. 访问 `about:addons`
             3. 点击齿轮图标，选择"从文件安装附加组件"
             4. 选择下载的 `.xpi` 文件
