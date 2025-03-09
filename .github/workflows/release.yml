@@ -16,11 +16,10 @@ jobs:
         uses: actions/setup-node@v3
         with:
           node-version: '18'
+          cache: 'npm'
           
-      - name: Install dependencies
-        run: |
-          npm install
-          npm install -g web-ext
+      - name: Install web-ext
+        run: npm install --global web-ext
           
       - name: Prepare manifest files
         run: |
