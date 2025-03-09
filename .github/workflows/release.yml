@@ -135,11 +135,11 @@ jobs:
           cd ..
           echo "Dist directory contents:"
           ls -la
-          # Rename the zip file to xpi with consistent naming
-          if [ -f github_data_push-*.zip ]; then
-            for f in github_data_push-*.zip; do
-              mv "$f" "github_data_push-${GITHUB_REF#refs/tags/v}-firefox.xpi"
-            done
+          # Find and rename the Firefox extension zip file
+          FIREFOX_ZIP=$(find . -name "github_data_push-*.zip" ! -name "*-chrome.zip")
+          if [ -n "$FIREFOX_ZIP" ]; then
+            echo "Found Firefox extension: $FIREFOX_ZIP"
+            mv "$FIREFOX_ZIP" "github_data_push-${GITHUB_REF#refs/tags/v}-firefox.xpi"
             echo "After renaming:"
             ls -la
           else
