@@ -95,7 +95,7 @@ jobs:
         run: |
           echo "Building Chrome extension..."
           mkdir -p dist/chrome
-          cp -r popup.* i18n.js icons dist/chrome/
+          cp -r popup.* i18n.js icons styles.css dist/chrome/
           cp manifest.chrome.json dist/chrome/manifest.json
           cd dist/chrome
           zip -r ../chrome.zip .
@@ -104,7 +104,7 @@ jobs:
         run: |
           echo "Building Firefox extension..."
           mkdir -p dist/firefox
-          cp -r popup.* i18n.js icons dist/firefox/
+          cp -r popup.* i18n.js icons styles.cssdist/firefox/
           cp manifest.firefox.json dist/firefox/manifest.json
           cd dist/firefox
           web-ext build --artifacts-dir ../firefox

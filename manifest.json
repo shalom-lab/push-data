@@ -27,24 +27,7 @@
   "host_permissions": [
     "https://api.github.com/*"
   ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "popup.html",
-        "popup.js",
-        "styles.css"
-      ],
-      "matches": ["<all_urls>"]
-    }
-  ],
   "background": {
     "service_worker": "background.js"
-  },
-  "content_scripts": [
-    {
-      "matches": ["<all_urls>"],
-      "js": ["i18n.js", "popup.js"],
-      "css": ["popup.css"]
-    }
-  ]
+  }
 } 
