@@ -5,7 +5,9 @@ let TEMPLATES = {
         fields: {
             title: { type: 'text', label: '项目名称' },
             link: { type: 'text', label: '项目链接' },
+            category: { type: 'text', label: '项目分类' },
             keywords: { type: 'text', label: '关键词' },
+            stars: { type: 'number', label: '推荐度', required: false },
         },
         filename: 'data-raw/projects.json'
     },
@@ -13,32 +15,32 @@ let TEMPLATES = {
         name: "🔎 模板示例",
         fieldOrder: ['text_example', 'textarea_example', 'select_example', 'date_example', 'number_example', 'checkbox_example', 'radio_example'],
         fields: {
-            text_example: { 
-                type: 'text', 
+            text_example: {
+                type: 'text',
                 label: '文本输入',
                 default: '默认文本',
                 required: true
             },
-            textarea_example: { 
-                type: 'textarea', 
+            textarea_example: {
+                type: 'textarea',
                 label: '多行文本',
                 default: '默认多行\n文本内容',
                 required: true
             },
-            select_example: { 
-                type: 'select', 
+            select_example: {
+                type: 'select',
                 label: '下拉选择',
                 options: ['选项A', '选项B', '选项C'],
                 default: '选项B',
                 required: true
             },
-            date_example: { 
-                type: 'date', 
+            date_example: {
+                type: 'date',
                 label: '日期选择',
                 required: false
             },
-            number_example: { 
-                type: 'number', 
+            number_example: {
+                type: 'number',
                 label: '数字输入',
                 required: false
             },
@@ -90,11 +92,11 @@ function detectLanguage() {
 function t(key, section = null) {
     const keys = key.split('.');
     let value = i18n[currentLang];
-    
+
     if (section) {
         value = value[section];
     }
-    
+
     for (const k of keys) {
         value = value[k];
         if (!value) return key;
@@ -129,7 +131,7 @@ function updateLanguage() {
             templateSelect.appendChild(option);
         });
         templateSelect.value = selectedValue;
-        
+
         // 更新模板选择器的标签文本
         const templateLabel = templateSelect.parentElement.querySelector('label');
         if (templateLabel) {
@@ -145,7 +147,7 @@ function updateLanguage() {
             repoList.options[0].textContent = t('selectRepo');
         }
         repoList.value = selectedValue;
-        
+
         // 更新仓库选择器的标签文本
         const repoLabel = repoList.parentElement.querySelector('label');
         if (repoLabel) {
@@ -274,7 +276,7 @@ function generateFormFields(templateName) {
         fieldName,
         currentTemplate.fields[fieldName]
     ]);
-    
+
     // 获取所有字段名并添加类型信息，保持原始顺序
     const fieldInfo = fieldEntries
         .map(([key, field]) => {
@@ -285,7 +287,7 @@ function generateFormFields(templateName) {
             return `${key}: ${typeInfo}`;
         })
         .join('\n');
-    
+
     pathNotice.innerHTML = `
         <div style="margin-bottom: 12px;">
             <div style="
@@ -346,7 +348,7 @@ function generateFormFields(templateName) {
     fieldEntries.forEach(([fieldName, field]) => {
         const div = document.createElement('div');
         div.className = 'form-group';
-        
+
         const label = document.createElement('label');
         label.textContent = field.label;
         if (field.required) {
@@ -387,12 +389,12 @@ function generateFormFields(templateName) {
             wrapper.style.display = 'flex';
             wrapper.style.alignItems = 'center';
             wrapper.style.gap = '8px';
-            
+
             input = document.createElement('input');
             input.type = 'checkbox';
             input.style.width = 'auto';
             input.checked = field.default || false;
-            
+
             // 移动标签到复选框后面
             wrapper.appendChild(input);
             label.style.marginBottom = '0';
@@ -405,13 +407,13 @@ function generateFormFields(templateName) {
             wrapper.style.display = 'flex';
             wrapper.style.gap = '16px';
             wrapper.style.marginTop = '8px';
-            
+
             field.options.forEach((option, index) => {
                 const radioWrapper = document.createElement('div');
                 radioWrapper.style.display = 'flex';
                 radioWrapper.style.alignItems = 'center';
                 radioWrapper.style.gap = '4px';
-                
+
                 const radio = document.createElement('input');
                 radio.type = 'radio';
                 radio.name = fieldName;
@@ -423,18 +425,18 @@ function generateFormFields(templateName) {
                 if (field.default === option) {
                     radio.checked = true;
                 }
-                
+
                 const radioLabel = document.createElement('label');
                 radioLabel.htmlFor = `${fieldName}_${index}`;
                 radioLabel.textContent = option;
                 radioLabel.style.marginBottom = '0';
                 radioLabel.style.fontWeight = 'normal';
-                
+
                 radioWrapper.appendChild(radio);
                 radioWrapper.appendChild(radioLabel);
                 wrapper.appendChild(radioWrapper);
             });
-            
+
             div.appendChild(wrapper);
             input = wrapper.querySelector('input'); // 获取第一个单选按钮用于ID设置
         } else {
@@ -442,7 +444,7 @@ function generateFormFields(templateName) {
             input.type = field.type || 'text';
             input.value = field.default || '';
         }
-        
+
         input.id = fieldName;
         if (!div.querySelector('input, textarea, select')) {
             div.appendChild(input);
@@ -456,19 +458,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 加载保存的语言设置
     const settings = await chrome.storage.local.get(['language']);
     currentLang = settings.language || detectLanguage();
-    
+
     // 初始化语言选择器
     initializeLanguageSelector();
-    
+
     // 先从本地存储加载模板
     await loadSavedTemplates();
-    
+
     // 初始化模板选择器
     initializeTemplateSelect();
-    
+
     // 检查 token 状态
     await checkToken();
-    
+
     // 初始化设置面板
     initializeSettings();
 
@@ -499,14 +501,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 fieldName,
                 currentTemplate.fields[fieldName]
             ]);
-            
+
             for (const [fieldName, field] of fieldEntries) {
                 const element = document.getElementById(fieldName);
                 let value;
-                
+
                 // 设置默认的required属性
                 field.required = field.required ?? true; // 如果未指定required，默认为true
-                
+
                 if (field.type === 'checkbox') {
                     value = element.checked;
                 } else if (field.type === 'radio') {
@@ -518,7 +520,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 } else {
                     value = element.value;
                 }
-                
+
                 // 检查必填字段
                 if (field.required && (value === '' || value === null || value === undefined)) {
                     const fieldLabel = field.label;
@@ -530,7 +532,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             try {
                 const settings = await chrome.storage.local.get(['github_token']);
-                
+
                 // 显示加载状态
                 const originalText = submitButton.textContent;
                 submitButton.disabled = true;
@@ -538,7 +540,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 submitButton.textContent = t('loading');
 
                 await appendToJsonFile(repoFullName, formData, settings.github_token);
-                
+
                 showToast(t('success.submit'));
                 // 清空表单
                 fieldEntries.forEach(([fieldName, field]) => {
@@ -578,15 +580,15 @@ document.addEventListener('DOMContentLoaded', async () => {
 function initializeTemplateSelect() {
     // 更新选择列表
     updateTemplateSelect();
-    
+
     // 绑定选择事件
     const templateSelect = document.getElementById('templateSelect');
     if (templateSelect) {
-        templateSelect.addEventListener('change', function(e) {
+        templateSelect.addEventListener('change', function (e) {
             const templateName = e.target.value;
             document.getElementById('formFields').innerHTML = '';
             currentTemplate = null;
-            
+
             if (templateName && TEMPLATES[templateName]) {
                 generateFormFields(templateName);
             }
@@ -603,10 +605,10 @@ function updateTemplateSelect() {
         console.error('找不到模板选择元素');
         return;
     }
-    
+
     // 清空现有选项
     templateSelect.innerHTML = '<option value="">请选择模板</option>';
-    
+
     // 添加新选项
     Object.entries(TEMPLATES).forEach(([key, template]) => {
         const option = document.createElement('option');
@@ -614,7 +616,7 @@ function updateTemplateSelect() {
         option.textContent = template.name;
         templateSelect.appendChild(option);
     });
-    
+
     // 调试日志
     console.log('模板列表已更新:', {
         templates: TEMPLATES,
@@ -629,18 +631,18 @@ function generateFilename(formData) {
         ?.toLowerCase()
         .replace(/[^a-z0-9]+/g, '-')  // 非字母数字替换为横线
         .replace(/^-+|-+$/g, '');     // 删除首尾横线
-    
+
     return `data/${date}-${sanitizedTitle}.json`;  // 例如: data/2024-03-20-my-title.json
 }
 
 async function appendToJsonFile(repoFullName, formData, token) {
     const filename = currentTemplate.filename;
-    
+
     try {
         let existingData = [];
         let fileData = null;
         let checkResponse = null;
-        
+
         try {
             checkResponse = await fetch(
                 `https://api.github.com/repos/${repoFullName}/contents/${filename}`,
@@ -650,7 +652,7 @@ async function appendToJsonFile(repoFullName, formData, token) {
                     }
                 }
             );
-            
+
             if (checkResponse.ok) {
                 fileData = await checkResponse.json();
                 // 使用 TextDecoder 解码 base64 内容
@@ -725,7 +727,7 @@ function showToast(message, type = 'success') {
     // 检查是否是预定义消息的key
     const section = type === 'success' ? 'success' : 'error';
     const translatedMessage = i18n[currentLang][section]?.[message] || message;
-    
+
     // 移除现有的 toast
     const existingToast = document.querySelector('.toast');
     if (existingToast) {
@@ -752,7 +754,7 @@ function showToast(message, type = 'success') {
 // 修改 showConfirmToast 函数以支持翻译
 function showConfirmToast(message, onConfirm) {
     const translatedMessage = i18n[currentLang].token.confirmReset || message;
-    
+
     // 移除现有的确认框
     const existingConfirm = document.querySelector('.confirm-toast');
     if (existingConfirm) {
@@ -761,14 +763,14 @@ function showConfirmToast(message, onConfirm) {
 
     const confirmDialog = document.createElement('div');
     confirmDialog.className = 'confirm-toast';
-    
+
     const messageDiv = document.createElement('div');
     messageDiv.className = 'confirm-message';
     messageDiv.textContent = translatedMessage;
-    
+
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'confirm-buttons';
-    
+
     const confirmButton = document.createElement('button');
     confirmButton.className = 'confirm-yes';
     confirmButton.textContent = t('yes');
@@ -776,15 +778,15 @@ function showConfirmToast(message, onConfirm) {
         onConfirm();
         confirmDialog.remove();
     };
-    
+
     const cancelButton = document.createElement('button');
     cancelButton.className = 'confirm-no';
     cancelButton.textContent = t('no');
     cancelButton.onclick = () => confirmDialog.remove();
-    
+
     buttonDiv.appendChild(confirmButton);
     buttonDiv.appendChild(cancelButton);
-    
+
     confirmDialog.appendChild(messageDiv);
     confirmDialog.appendChild(buttonDiv);
     document.body.appendChild(confirmDialog);
@@ -814,7 +816,7 @@ async function loadRepos() {
 
         const repos = await response.json();
         repoList.innerHTML = `<option value="">${t('selectRepo')}</option>`;
-        
+
         repos
             .sort((a, b) => a.full_name.localeCompare(b.full_name))
             .forEach(repo => {
@@ -856,7 +858,7 @@ function initializeSettings() {
             const newTemplates = JSON.parse(templatesEditor.value);
             if (Object.keys(newTemplates).length === 0) {
                 await chrome.storage.local.set({ templates: newTemplates });
-                TEMPLATES = {}; 
+                TEMPLATES = {};
                 updateTemplateSelect();
                 showToast(t('templates.success.save'));
             } else if (validateTemplates(newTemplates)) {
