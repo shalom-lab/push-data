@@ -4,25 +4,28 @@
   "description": "Push data to GitHub repository with customizable templates",
   "private": true,
   "scripts": {
-    "build": "echo 'No build step required'",
-    "test": "echo 'No test specified'"
+    "build": "web-ext build",
+    "start:chrome": "web-ext run -t chromium",
+    "start:firefox": "web-ext run -t firefox-desktop",
+    "lint": "web-ext lint"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/yourusername/push-data.git"
+    "url": "git+https://github.com/shalom-lab/push-data.git"
   },
   "keywords": [
     "github",
     "chrome-extension",
     "firefox-addon",
-    "data-management"
+    "data-management",
+    "template"
   ],
-  "author": "",
+  "author": "GitHub Data Push",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/yourusername/push-data/issues"
+    "url": "https://github.com/shalom-lab/push-data/issues"
   },
-  "homepage": "https://github.com/yourusername/push-data#readme",
+  "homepage": "https://github.com/shalom-lab/push-data#readme",
   "devDependencies": {
     "web-ext": "^7.11.0"
   }
