@@ -74,12 +74,14 @@ jobs:
             "description": "Push data to GitHub repository with customizable templates",
             "browser_specific_settings": {
               "gecko": {
-                "id": "github-data-push@extensions"
+                "id": "github-data-push@extensions",
+                "strict_min_version": "57.0"
               }
             },
             "permissions": [
               "storage",
-              "https://api.github.com/*"
+              "https://api.github.com/*",
+              "tabs"
             ],
             "sidebar_action": {
               "default_title": "GitHub Data Push",
@@ -88,6 +90,14 @@ jobs:
                 "16": "icons/icon16.png",
                 "48": "icons/icon48.png",
                 "128": "icons/icon128.png"
+              },
+              "open_at_install": false
+            },
+            "commands": {
+              "_execute_sidebar_action": {
+                "suggested_key": {
+                  "default": "Ctrl+Shift+Y"
+                }
               }
             },
             "icons": {
@@ -96,7 +106,8 @@ jobs:
               "128": "icons/icon128.png"
             },
             "background": {
-              "scripts": ["background.js"]
+              "scripts": ["background.js"],
+              "persistent": false
             }
           }
           EOL
@@ -117,7 +128,17 @@ jobs:
           cp -r popup.* i18n.js icons styles.css background.js dist/firefox/
           cp manifest.firefox.json dist/firefox/manifest.json
           cd dist/firefox
+          echo "Current directory contents:"
+          ls -la
+          echo "Building web-ext..."
           web-ext build --artifacts-dir ../ --overwrite-dest
+          cd ..
+          echo "Dist directory contents:"
+          ls -la
+          if [ ! -f *.xpi ]; then
+            echo "Error: No .xpi file found!"
+            exit 1
+          fi
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
