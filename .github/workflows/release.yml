@@ -107,7 +107,7 @@ jobs:
           cp -r popup.* i18n.js icons styles.css dist/firefox/
           cp manifest.firefox.json dist/firefox/manifest.json
           cd dist/firefox
-          web-ext build --artifacts-dir ../firefox
+          web-ext build --artifacts-dir ../ --overwrite-dest
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
@@ -115,7 +115,7 @@ jobs:
         with:
           files: |
             dist/chrome.zip
-            dist/firefox/web-ext-artifacts/*.xpi
+            dist/*.xpi
           name: Release ${{ github.ref_name }}
           body: |
             ## GitHub Data Push ${{ github.ref_name }}
