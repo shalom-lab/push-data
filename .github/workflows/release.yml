@@ -135,8 +135,15 @@ jobs:
           cd ..
           echo "Dist directory contents:"
           ls -la
-          if [ ! -f *.xpi ]; then
-            echo "Error: No .xpi file found!"
+          # Rename the zip file to xpi
+          if [ -f github_data_push-*.zip ]; then
+            for f in github_data_push-*.zip; do
+              mv "$f" "${f%.zip}.xpi"
+            done
+            echo "After renaming:"
+            ls -la
+          else
+            echo "Error: No Firefox extension zip file found!"
             exit 1
           fi
 
