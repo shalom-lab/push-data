@@ -104,7 +104,7 @@ jobs:
         run: |
           echo "Building Firefox extension..."
           mkdir -p dist/firefox
-          cp -r popup.* i18n.js icons styles.cssdist/firefox/
+          cp -r popup.* i18n.js icons styles.css dist/firefox/
           cp manifest.firefox.json dist/firefox/manifest.json
           cd dist/firefox
           web-ext build --artifacts-dir ../firefox
