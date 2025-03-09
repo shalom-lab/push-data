@@ -1,7 +1,7 @@
 # GitHub Data Push
 
 <p align="center">
-  <img src="icons/icon128.png" alt="GitHub Data Push Logo">
+  <img src="icons/icon128.png" alt="GitHub Data Push Logo" width="128" height="128">
 </p>
 
 <p align="center">
@@ -22,6 +22,10 @@ A browser extension that helps you push data to GitHub repositories using custom
 
 - Chrome/Edge (Manifest V3)
 - Firefox (Manifest V2)
+
+<p align="center">
+  <img src="images/promo_large.png" alt="GitHub Data Push Screenshot" width="100%" style="max-width: 1280px">
+</p>
 
 ## 📦 Installation
 
