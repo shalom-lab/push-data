@@ -1,36 +1,59 @@
 let TEMPLATES = {
     "my-project": {
         name: "🚀 我的项目",
+        fieldOrder: ['title', 'link', 'keywords'],
         fields: {
             title: { type: 'text', label: '项目名称' },
             link: { type: 'text', label: '项目链接' },
-            keywords: { type: 'text', label: '关键词' }
+            keywords: { type: 'text', label: '关键词' },
         },
         filename: 'data-raw/projects.json'
     },
     field_types: {
         name: "🔎 模板示例",
+        fieldOrder: ['text_example', 'textarea_example', 'select_example', 'date_example', 'number_example', 'checkbox_example', 'radio_example'],
         fields: {
             text_example: { 
                 type: 'text', 
-                label: '文本输入' 
+                label: '文本输入',
+                default: '默认文本',
+                required: true
             },
             textarea_example: { 
                 type: 'textarea', 
-                label: '多行文本' 
+                label: '多行文本',
+                default: '默认多行\n文本内容',
+                required: true
             },
             select_example: { 
                 type: 'select', 
                 label: '下拉选择',
-                options: ['选项A', '选项B', '选项C']
+                options: ['选项A', '选项B', '选项C'],
+                default: '选项B',
+                required: true
             },
             date_example: { 
                 type: 'date', 
-                label: '日期选择' 
+                label: '日期选择',
+                required: false
             },
             number_example: { 
                 type: 'number', 
-                label: '数字输入' 
+                label: '数字输入',
+                required: false
+            },
+            checkbox_example: {
+                type: 'checkbox',
+                label: '是否启用',
+                default: false,
+                required: false
+            },
+            radio_example: {
+                type: 'radio',
+                label: '选择性别',
+                options: ['男', '女', '其他'],
+                default: '男',
+                required: true
             }
         },
         filename: 'data-raw/examples.json'
@@ -40,10 +63,27 @@ let TEMPLATES = {
 let currentTemplate = null;
 let currentLang = 'zh'; // 默认中文
 
+// 支持的语言列表
+const SUPPORTED_LANGUAGES = {
+    'zh': '简体中文',
+    'en': 'English',
+    'ja': '日本語',
+    'ko': '한국어',
+    'fr': 'Français',
+    'de': 'Deutsch',
+    'es': 'Español'
+};
+
 // 获取浏览器语言并设置默认语言
 function detectLanguage() {
     const browserLang = navigator.language.toLowerCase();
-    return browserLang.startsWith('zh') ? 'zh' : 'en';
+    // 检查完整的语言代码（例如 zh-CN）
+    for (const lang of Object.keys(SUPPORTED_LANGUAGES)) {
+        if (browserLang.startsWith(lang)) {
+            return lang;
+        }
+    }
+    return 'en'; // 默认返回英语
 }
 
 // 获取翻译文本
@@ -211,6 +251,12 @@ function generateFormFields(templateName) {
     const formFields = document.getElementById('formFields');
     formFields.innerHTML = '';
 
+    // 检查模板是否存在且具有必要的属性
+    if (!currentTemplate || !currentTemplate.fieldOrder || !Array.isArray(currentTemplate.fieldOrder)) {
+        console.error(`Invalid template "${templateName}"`);
+        return;
+    }
+
     // 添加文件路径提示框
     const pathNotice = document.createElement('div');
     pathNotice.className = 'notice';
@@ -223,8 +269,14 @@ function generateFormFields(templateName) {
     pathNotice.style.lineHeight = '1.4';
     pathNotice.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
 
-    // 获取所有字段名并添加类型信息
-    const fieldInfo = Object.entries(currentTemplate.fields)
+    // 使用 fieldOrder 来获取有序的字段列表
+    const fieldEntries = currentTemplate.fieldOrder.map(fieldName => [
+        fieldName,
+        currentTemplate.fields[fieldName]
+    ]);
+    
+    // 获取所有字段名并添加类型信息，保持原始顺序
+    const fieldInfo = fieldEntries
         .map(([key, field]) => {
             let typeInfo = field.type;
             if (field.type === 'select') {
@@ -290,18 +342,27 @@ function generateFormFields(templateName) {
     `;
     formFields.appendChild(pathNotice);
 
-    Object.entries(currentTemplate.fields).forEach(([fieldName, field]) => {
+    // 使用保存的 fieldEntries 来生成表单，确保顺序一致
+    fieldEntries.forEach(([fieldName, field]) => {
         const div = document.createElement('div');
         div.className = 'form-group';
         
         const label = document.createElement('label');
         label.textContent = field.label;
+        if (field.required) {
+            const requiredMark = document.createElement('span');
+            requiredMark.textContent = ' *';
+            requiredMark.style.color = '#ff4d4f';
+            requiredMark.style.marginLeft = '4px';
+            label.appendChild(requiredMark);
+        }
         div.appendChild(label);
 
         let input;
         if (field.type === 'textarea') {
             input = document.createElement('textarea');
             input.rows = 4;
+            input.value = field.default || '';
         } else if (field.type === 'select' && Array.isArray(field.options)) {
             input = document.createElement('select');
             // 添加一个默认选项
@@ -316,13 +377,76 @@ function generateFormFields(templateName) {
                 opt.textContent = option;
                 input.appendChild(opt);
             });
+            // 设置默认选中值
+            if (field.default) {
+                input.value = field.default;
+            }
+        } else if (field.type === 'checkbox') {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'checkbox-wrapper';
+            wrapper.style.display = 'flex';
+            wrapper.style.alignItems = 'center';
+            wrapper.style.gap = '8px';
+            
+            input = document.createElement('input');
+            input.type = 'checkbox';
+            input.style.width = 'auto';
+            input.checked = field.default || false;
+            
+            // 移动标签到复选框后面
+            wrapper.appendChild(input);
+            label.style.marginBottom = '0';
+            wrapper.appendChild(label);
+            div.innerHTML = '';
+            div.appendChild(wrapper);
+        } else if (field.type === 'radio' && Array.isArray(field.options)) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'radio-group';
+            wrapper.style.display = 'flex';
+            wrapper.style.gap = '16px';
+            wrapper.style.marginTop = '8px';
+            
+            field.options.forEach((option, index) => {
+                const radioWrapper = document.createElement('div');
+                radioWrapper.style.display = 'flex';
+                radioWrapper.style.alignItems = 'center';
+                radioWrapper.style.gap = '4px';
+                
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = fieldName;
+                radio.id = `${fieldName}_${index}`;
+                radio.value = option;
+                radio.style.width = 'auto';
+                radio.style.margin = '0';
+                // 设置默认选中值
+                if (field.default === option) {
+                    radio.checked = true;
+                }
+                
+                const radioLabel = document.createElement('label');
+                radioLabel.htmlFor = `${fieldName}_${index}`;
+                radioLabel.textContent = option;
+                radioLabel.style.marginBottom = '0';
+                radioLabel.style.fontWeight = 'normal';
+                
+                radioWrapper.appendChild(radio);
+                radioWrapper.appendChild(radioLabel);
+                wrapper.appendChild(radioWrapper);
+            });
+            
+            div.appendChild(wrapper);
+            input = wrapper.querySelector('input'); // 获取第一个单选按钮用于ID设置
         } else {
             input = document.createElement('input');
             input.type = field.type || 'text';
+            input.value = field.default || '';
         }
         
         input.id = fieldName;
-        div.appendChild(input);
+        if (!div.querySelector('input, textarea, select')) {
+            div.appendChild(input);
+        }
         formFields.appendChild(div);
     });
 }
@@ -333,18 +457,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     const settings = await chrome.storage.local.get(['language']);
     currentLang = settings.language || detectLanguage();
     
-    // 设置语言选择器的值
-    const languageSelect = document.getElementById('languageSelect');
-    if (languageSelect) {
-        languageSelect.value = currentLang;
-        languageSelect.addEventListener('change', async (e) => {
-            currentLang = e.target.value;
-            await chrome.storage.local.set({ language: currentLang });
-            updateLanguage();
-            // 重新加载仓库列表以更新文本
-            await loadRepos();
-        });
-    }
+    // 初始化语言选择器
+    initializeLanguageSelector();
     
     // 先从本地存储加载模板
     await loadSavedTemplates();
@@ -363,6 +477,101 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 显示主界面
     document.getElementById('main').style.display = 'block';
+
+    // 添加提交按钮事件监听器
+    const submitButton = document.getElementById('submit');
+    if (submitButton) {
+        submitButton.addEventListener('click', async () => {
+            if (!currentTemplate) {
+                showToast(t('error.selectTemplate'), 'error');
+                return;
+            }
+
+            const repoFullName = document.getElementById('repoList').value;
+            if (!repoFullName) {
+                showToast(t('error.selectRepo'), 'error');
+                return;
+            }
+
+            // 收集表单数据，保持字段顺序
+            const formData = {};
+            const fieldEntries = currentTemplate.fieldOrder.map(fieldName => [
+                fieldName,
+                currentTemplate.fields[fieldName]
+            ]);
+            
+            for (const [fieldName, field] of fieldEntries) {
+                const element = document.getElementById(fieldName);
+                let value;
+                
+                // 设置默认的required属性
+                field.required = field.required ?? true; // 如果未指定required，默认为true
+                
+                if (field.type === 'checkbox') {
+                    value = element.checked;
+                } else if (field.type === 'radio') {
+                    const checkedRadio = document.querySelector(`input[name="${fieldName}"]:checked`);
+                    value = checkedRadio ? checkedRadio.value : '';
+                } else if (field.type === 'number') {
+                    // 对数字类型进行特殊处理
+                    value = element.value === '' ? '' : Number(element.value);
+                } else {
+                    value = element.value;
+                }
+                
+                // 检查必填字段
+                if (field.required && (value === '' || value === null || value === undefined)) {
+                    const fieldLabel = field.label;
+                    showToast(t('error.fieldRequired').replace('{field}', fieldLabel), 'error');
+                    return;
+                }
+                formData[fieldName] = value;
+            }
+
+            try {
+                const settings = await chrome.storage.local.get(['github_token']);
+                
+                // 显示加载状态
+                const originalText = submitButton.textContent;
+                submitButton.disabled = true;
+                submitButton.classList.add('loading');
+                submitButton.textContent = t('loading');
+
+                await appendToJsonFile(repoFullName, formData, settings.github_token);
+                
+                showToast(t('success.submit'));
+                // 清空表单
+                fieldEntries.forEach(([fieldName, field]) => {
+                    const element = document.getElementById(fieldName);
+                    if (field.type === 'checkbox') {
+                        element.checked = field.default || false;
+                    } else if (field.type === 'radio') {
+                        const radios = document.querySelectorAll(`input[name="${fieldName}"]`);
+                        radios.forEach(radio => radio.checked = false);
+                        if (field.default) {
+                            const defaultRadio = Array.from(radios).find(radio => radio.value === field.default);
+                            if (defaultRadio) defaultRadio.checked = true;
+                        }
+                    } else if (field.type === 'select') {
+                        element.value = field.default || '';
+                    } else {
+                        element.value = field.default || '';
+                    }
+                });
+
+                // 恢复按钮状态
+                submitButton.disabled = false;
+                submitButton.classList.remove('loading');
+                submitButton.textContent = originalText;
+            } catch (error) {
+                showToast(error.message, 'error');
+                // 恢复按钮状态
+                submitButton.disabled = false;
+                submitButton.classList.remove('loading');
+                submitButton.textContent = originalText;
+            }
+        });
+    }
 });
 
 // 将模板选择相关的代码封装到一个函数中
@@ -375,11 +584,11 @@ function initializeTemplateSelect() {
     if (templateSelect) {
         templateSelect.addEventListener('change', function(e) {
             const templateName = e.target.value;
-            if (templateName) {
+            document.getElementById('formFields').innerHTML = '';
+            currentTemplate = null;
+            
+            if (templateName && TEMPLATES[templateName]) {
                 generateFormFields(templateName);
-            } else {
-                document.getElementById('formFields').innerHTML = '';
-                currentTemplate = null;
             }
         });
     } else {
@@ -542,86 +751,48 @@ function showToast(message, type = 'success') {
 
 // 修改 showConfirmToast 函数以支持翻译
 function showConfirmToast(message, onConfirm) {
-    const translatedMessage = i18n[currentLang].confirmReset || message;
-    const toast = document.createElement('div');
-    toast.className = 'toast confirm';
+    const translatedMessage = i18n[currentLang].token.confirmReset || message;
+    
+    // 移除现有的确认框
+    const existingConfirm = document.querySelector('.confirm-toast');
+    if (existingConfirm) {
+        existingConfirm.remove();
+    }
+
+    const confirmDialog = document.createElement('div');
+    confirmDialog.className = 'confirm-toast';
     
     const messageDiv = document.createElement('div');
+    messageDiv.className = 'confirm-message';
     messageDiv.textContent = translatedMessage;
     
     const buttonDiv = document.createElement('div');
     buttonDiv.className = 'confirm-buttons';
     
     const confirmButton = document.createElement('button');
+    confirmButton.className = 'confirm-yes';
     confirmButton.textContent = t('yes');
     confirmButton.onclick = () => {
         onConfirm();
-        toast.remove();
+        confirmDialog.remove();
     };
     
     const cancelButton = document.createElement('button');
+    cancelButton.className = 'confirm-no';
     cancelButton.textContent = t('no');
-    cancelButton.onclick = () => toast.remove();
+    cancelButton.onclick = () => confirmDialog.remove();
     
     buttonDiv.appendChild(confirmButton);
     buttonDiv.appendChild(cancelButton);
     
-    toast.appendChild(messageDiv);
-    toast.appendChild(buttonDiv);
-    document.body.appendChild(toast);
+    confirmDialog.appendChild(messageDiv);
+    confirmDialog.appendChild(buttonDiv);
+    document.body.appendChild(confirmDialog);
+
+    // 强制重绘并显示
+    confirmDialog.offsetHeight;
+    confirmDialog.classList.add('show');
 }
-
-// 修改 submit 按钮事件处理
-document.getElementById('submit').addEventListener('click', async () => {
-    if (!currentTemplate) {
-        showToast('请先选择一个模板', 'error');
-        return;
-    }
-
-    const repoFullName = document.getElementById('repoList').value;
-    if (!repoFullName) {
-        showToast('请选择仓库', 'error');
-        return;
-    }
-
-    // 收集表单数据
-    const formData = {};
-    for (const fieldName of Object.keys(currentTemplate.fields)) {
-        const value = document.getElementById(fieldName).value;
-        if (!value) {
-            showToast(`请填写${currentTemplate.fields[fieldName].label}`, 'error');
-            return;
-        }
-        formData[fieldName] = value;
-    }
-
-    try {
-        const settings = await chrome.storage.local.get(['github_token']);
-        
-        // 显示加载状态
-        const submitButton = document.getElementById('submit');
-        const originalText = submitButton.textContent;
-        submitButton.disabled = true;
-        submitButton.classList.add('loading');
-        submitButton.textContent = '提交中';
-
-        await appendToJsonFile(repoFullName, formData, settings.github_token);
-        
-        showToast('提交成功！');
-            // 清空表单
-            Object.keys(currentTemplate.fields).forEach(fieldName => {
-                document.getElementById(fieldName).value = '';
-            });
-    } catch (error) {
-        showToast(error.message, 'error');
-    } finally {
-        // 恢复按钮状态
-        const submitButton = document.getElementById('submit');
-        submitButton.disabled = false;
-        submitButton.classList.remove('loading');
-        submitButton.textContent = originalText;
-    }
-});
 
 // 加载仓库列表
 async function loadRepos() {
@@ -779,6 +950,22 @@ function validateTemplates(templates) {
         if (!template.filename || typeof template.filename !== 'string') {
             throw new Error(`模板 ${key} 缺少 filename 属性`);
         }
+        if (!template.fieldOrder || !Array.isArray(template.fieldOrder)) {
+            // 如果没有 fieldOrder，自动生成一个
+            template.fieldOrder = Object.keys(template.fields);
+        }
+        // 验证 fieldOrder 中的字段都存在于 fields 中
+        for (const fieldName of template.fieldOrder) {
+            if (!template.fields[fieldName]) {
+                throw new Error(`模板 ${key} 的 fieldOrder 包含未定义的字段: ${fieldName}`);
+            }
+        }
+        // 验证所有 fields 中的字段都在 fieldOrder 中
+        for (const fieldName of Object.keys(template.fields)) {
+            if (!template.fieldOrder.includes(fieldName)) {
+                throw new Error(`模板 ${key} 的字段 ${fieldName} 未包含在 fieldOrder 中`);
+            }
+        }
     }
     return true;
 }
@@ -789,4 +976,33 @@ async function loadSavedTemplates() {
     if (result.templates !== undefined) {
         TEMPLATES = { ...result.templates };
     }
+}
+
+// 初始化语言选择器
+function initializeLanguageSelector() {
+    const languageSelect = document.getElementById('languageSelect');
+    if (!languageSelect) return;
+
+    // 清空现有选项
+    languageSelect.innerHTML = '';
+
+    // 添加支持的语言选项
+    Object.entries(SUPPORTED_LANGUAGES).forEach(([code, name]) => {
+        const option = document.createElement('option');
+        option.value = code;
+        option.textContent = name;
+        languageSelect.appendChild(option);
+    });
+
+    // 设置当前选中的语言
+    languageSelect.value = currentLang;
+
+    // 添加切换事件
+    languageSelect.addEventListener('change', async (e) => {
+        currentLang = e.target.value;
+        await chrome.storage.local.set({ language: currentLang });
+        updateLanguage();
+        // 重新加载仓库列表以更新文本
+        await loadRepos();
+    });
 } 

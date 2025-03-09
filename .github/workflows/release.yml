@@ -1,0 +1,181 @@
+name: Build and Release Extensions
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送版本标签时触发，如 v1.0.0
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          npm install
+          npm install -g web-ext
+          
+      - name: Prepare manifest files
+        run: |
+          # 创建 Chrome/Edge 版本的 manifest
+          cat > manifest.chrome.json << EOL
+          {
+            "manifest_version": 3,
+            "name": "GitHub Data Push",
+            "version": "${GITHUB_REF#refs/tags/v}",
+            "description": "Push data to GitHub repository with customizable templates",
+            "permissions": [
+              "storage",
+              "activeTab"
+            ],
+            "host_permissions": [
+              "https://api.github.com/*"
+            ],
+            "action": {
+              "default_popup": "popup.html",
+              "default_icon": {
+                "16": "icons/icon16.png",
+                "48": "icons/icon48.png",
+                "128": "icons/icon128.png"
+              }
+            },
+            "icons": {
+              "16": "icons/icon16.png",
+              "48": "icons/icon48.png",
+              "128": "icons/icon128.png"
+            }
+          }
+          EOL
+
+          # 创建 Firefox 版本的 manifest
+          cat > manifest.firefox.json << EOL
+          {
+            "manifest_version": 2,
+            "name": "GitHub Data Push",
+            "version": "${GITHUB_REF#refs/tags/v}",
+            "description": "Push data to GitHub repository with customizable templates",
+            "permissions": [
+              "storage",
+              "activeTab",
+              "https://api.github.com/*"
+            ],
+            "browser_action": {
+              "default_popup": "popup.html",
+              "default_icon": {
+                "16": "icons/icon16.png",
+                "48": "icons/icon48.png",
+                "128": "icons/icon128.png"
+              }
+            },
+            "icons": {
+              "16": "icons/icon16.png",
+              "48": "icons/icon48.png",
+              "128": "icons/icon128.png"
+            }
+          }
+          EOL
+
+      - name: Build Chrome extension
+        run: |
+          mkdir -p dist/chrome
+          cp -r popup.* i18n.js icons dist/chrome/
+          cp manifest.chrome.json dist/chrome/manifest.json
+          cd dist/chrome
+          zip -r ../chrome.zip .
+
+      - name: Build Firefox extension
+        run: |
+          mkdir -p dist/firefox
+          cp -r popup.* i18n.js icons dist/firefox/
+          cp manifest.firefox.json dist/firefox/manifest.json
+          cd dist/firefox
+          web-ext build --artifacts-dir ../firefox
+
+      - name: Generate Release Notes
+        id: release_notes
+        run: |
+          # 获取版本号
+          VERSION=${GITHUB_REF#refs/tags/}
+          
+          # 生成发布说明
+          cat > release_notes.md << EOL
+          ## GitHub Data Push ${VERSION}
+          
+          ### 🌐 支持的浏览器 / Supported Browsers
+          - Chrome/Edge (Manifest V3)
+          - Firefox (Manifest V2)
+          
+          ### 📦 下载说明 / Download Instructions
+          - Chrome/Edge 用户请下载: \`github-data-push-chrome.zip\`
+          - Firefox 用户请下载: \`github-data-push-firefox.xpi\`
+          
+          ### 🌍 支持的语言 / Supported Languages
+          - 简体中文 (Chinese Simplified)
+          - English
+          - 日本語 (Japanese)
+          - 한국어 (Korean)
+          - Français (French)
+          - Deutsch (German)
+          - Español (Spanish)
+          
+          ### 📝 功能特点 / Features
+          - ✨ 自定义数据模板
+          - 🔄 多语言支持
+          - 🔒 安全的 Token 管理
+          - 📁 灵活的数据存储
+          - 🎨 直观的用户界面
+          
+          ### 💡 使用提示 / Usage Tips
+          1. 首次使用请在设置中配置 GitHub Token
+          2. 选择或创建数据模板
+          3. 选择目标仓库
+          4. 填写并提交数据
+          
+          ### 🔐 隐私说明 / Privacy Notice
+          - Token 仅保存在本地浏览器中
+          - 所有数据传输均使用 GitHub API 加密通道
+          EOL
+          
+          # 将release notes内容设置为输出变量
+          echo "RELEASE_NOTES<<EOF" >> $GITHUB_ENV
+          cat release_notes.md >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+
+      - name: Create Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Release ${{ github.ref }}
+          body: ${{ env.RELEASE_NOTES }}
+          draft: false
+          prerelease: false
+
+      - name: Upload Chrome Extension
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/chrome.zip
+          asset_name: github-data-push-chrome.zip
+          asset_content_type: application/zip
+
+      - name: Upload Firefox Extension
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: ./dist/firefox/web-ext-artifacts/github_data_push-${{ github.ref_name }}.zip
+          asset_name: github-data-push-firefox.xpi
+          asset_content_type: application/x-xpinstall 

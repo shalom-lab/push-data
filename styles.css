@@ -411,55 +411,17 @@ body {
     left: 50%;
     transform: translate(-50%, -50%) scale(0.9);
     background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
     z-index: 1001;
     opacity: 0;
-    transition: all 0.3s ease;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    min-width: 240px;
+    max-width: 280px;
 }
 
-.confirm-toast.show {
-    opacity: 1;
-    transform: translate(-50%, -50%) scale(1);
-}
-
-.confirm-message {
-    margin-bottom: 16px;
-    color: #24292e;
-    font-size: 15px;
-    font-weight: 500;
-    text-align: center;
-}
-
-.confirm-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-}
-
-.confirm-buttons button {
-    min-width: 80px;
-    padding: 8px 16px;
-}
-
-.confirm-yes {
-    background-color: #d73a49 !important;
-}
-
-.confirm-yes:hover {
-    background-color: #cb2431 !important;
-}
-
-.confirm-no {
-    background-color: #6e7781 !important;
-}
-
-.confirm-no:hover {
-    background-color: #5c636a !important;
-}
-
-/* 添加遮罩层 */
 .confirm-toast::before {
     content: '';
     position: fixed;
@@ -469,6 +431,56 @@ body {
     bottom: 0;
     background: rgba(0, 0, 0, 0.5);
     z-index: -1;
+}
+
+.confirm-toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.confirm-message {
+    margin-bottom: 16px;
+    color: #24292e;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.confirm-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.confirm-buttons button {
+    min-width: 60px;
+    min-height: 32px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirm-yes {
+    background-color: #d73a49 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.confirm-yes:hover {
+    background-color: #cb2431 !important;
+}
+
+.confirm-no {
+    background-color: #e1e4e8 !important;
+    color: #24292e !important;
+    border: 1px solid #e1e4e8 !important;
+}
+
+.confirm-no:hover {
+    background-color: #d1d5da !important;
 }
 
 /* Logo 样式 */
