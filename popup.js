@@ -1,7 +1,7 @@
 let TEMPLATES = {
     "my-project": {
         name: "🚀 我的项目",
-        fieldOrder: ['title', 'link', 'keywords', 'stars'],
+        fieldOrder: ['title', 'link', 'category', 'keywords', 'stars'],
         fields: {
             title: { type: 'text', label: '项目名称' },
             link: { type: 'text', label: '项目链接' },
