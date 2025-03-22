@@ -1,0 +1,525 @@
+body {
+    width: 100%;
+    min-height: 100vh;
+    padding: 5px;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+    box-sizing: border-box;
+}
+
+h3 {
+    margin-top: 0;
+    color: #24292e;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;
+    margin-bottom: 8px;
+    color: #24292e;
+    font-weight: 500;
+    font-size: 14px;
+}
+
+input, select, textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    box-sizing: border-box;
+    font-size: 14px;
+    line-height: 20px;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    background-color: #fff;
+}
+
+input:focus, select:focus, textarea:focus {
+    outline: none;
+    border-color: #0366d6;
+    box-shadow: 0 0 0 3px rgba(3, 102, 214, 0.3);
+}
+
+button {
+    min-height: 44px;
+    padding: 10px 24px;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #2ea44f;
+    color: white;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+
+button:hover {
+    background-color: #2c974b;
+    transform: translateY(-1px);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* 设置面板按钮样式 */
+#backToMain,
+#importTemplates,
+#exportTemplates,
+#openSettings {
+    min-height: 32px;
+    padding: 6px 12px;
+    font-size: 12px;
+    background-color: #6e7781;
+    box-shadow: none;
+    min-width: 70px;
+}
+
+#backToMain:hover,
+#importTemplates:hover,
+#exportTemplates:hover,
+#openSettings:hover {
+    background-color: #636d76;
+}
+
+#importTemplates,
+#exportTemplates {
+    min-width: 32px;
+    min-height: 24px;
+    padding: 2px 6px;
+    font-size: 11px;
+    background-color: #6e7781;
+}
+
+#importTemplates:hover,
+#exportTemplates:hover {
+    background-color: #636d76;
+}
+
+#openSettings {
+    margin-left: auto;
+    background-color: #57606a;
+    font-weight: normal;
+}
+
+#openSettings:hover {
+    background-color: #4c535b;
+}
+
+/* 主要提交按钮样式 */
+#submit {
+    width: 100%;
+    margin-top: 32px;
+    font-size: 16px;
+    font-weight: 600;
+    background-color: #238636;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+#submit:hover {
+    background-color: #2ea043;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+#submit:active {
+    background-color: #238636;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+/* 滚动条样式 */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Toast 提示框 */
+.toast {
+    position: fixed;
+    top: 40px;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px 20px;
+    border-radius: 4px;
+    background: #28a745;
+    color: white;
+    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+    z-index: 1000;
+    max-width: 80%;
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
+}
+
+.toast.show {
+    opacity: 1;
+    visibility: visible;
+}
+
+.toast.error {
+    background: #dc3545;
+}
+
+/* 加载状态 */
+.loading {
+    position: relative;
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.loading::after {
+    content: '';
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 50%;
+    right: 10px;
+    transform: translateY(-50%);
+    border: 2px solid transparent;
+    border-top-color: #ffffff;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: translateY(-50%) rotate(360deg);
+    }
+}
+
+/* 欢迎提示 */
+.notice {
+    padding: 16px;
+    background: #f6f8fa;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    text-align: center;
+    color: #24292e;
+}
+
+.notice p {
+    margin: 8px 0;
+}
+
+.notice p:first-child {
+    font-weight: 500;
+}
+
+/* 设置页面样式 */
+.settings-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #d1d5da;
+}
+
+.settings-header h3 {
+    margin: 0;
+}
+
+.settings-header button {
+    margin-left: auto;
+    background-color: #6e7781;
+}
+
+.settings-container {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.settings-item {
+    background: #f6f8fa;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.settings-item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.settings-item-header h4 {
+    margin: 0;
+    color: #24292e;
+    font-size: 14px;
+}
+
+.token-section {
+    background: #f6f8fa;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.token-input-group {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.token-input-group input {
+    flex: 1;
+    height: 36px;
+}
+
+.token-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.token-buttons button {
+    height: 36px;
+    padding: 0 16px;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.template-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.template-buttons button {
+    padding: 4px 8px;
+    font-size: 12px;
+    background-color: #6e7781;
+}
+
+#templatesEditor {
+    width: 100%;
+    height: 400px;
+    margin: 8px 0;
+    padding: 8px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 12px;
+    line-height: 1.4;
+    resize: vertical;
+    border: 1px solid #d1d5da;
+    border-radius: 6px;
+    background: white;
+}
+
+.full-width {
+    width: 100%;
+    margin-top: 8px;
+}
+
+button.danger {
+    background-color: #d73a49;
+    color: white;
+}
+
+button.danger:hover {
+    background-color: #cb2431;
+}
+
+/* 调整主容器布局 */
+#main, #settings {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 5px;
+    box-sizing: border-box;
+}
+
+/* 调整文本区域高度 */
+textarea {
+    min-height: 150px;
+}
+
+/* 添加响应式布局 */
+@media (min-width: 768px) {
+    .settings-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 20px;
+    }
+    
+    .token-input-group {
+        flex-direction: row;
+    }
+}
+
+@media (max-width: 767px) {
+    body {
+        padding: 16px;
+    }
+    
+    .token-input-group {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .token-buttons {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        width: 100%;
+    }
+    
+    .token-buttons button {
+        width: 100%;
+    }
+}
+
+/* 优化滚动条 */
+body {
+    overflow-y: auto;
+}
+
+/* 添加页面过渡效果 */
+#main, #settings {
+    transition: opacity 0.3s ease;
+}
+
+#main.hide, #settings.hide {
+    opacity: 0;
+}
+
+/* 确认 Toast 样式 */
+.confirm-toast {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0.9);
+    background: white;
+    padding: 16px;
+    border-radius: 6px;
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.15);
+    z-index: 1001;
+    opacity: 0;
+    visibility: hidden;
+    transition: all 0.2s ease;
+    min-width: 240px;
+    max-width: 280px;
+}
+
+.confirm-toast::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+}
+
+.confirm-toast.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translate(-50%, -50%) scale(1);
+}
+
+.confirm-message {
+    margin-bottom: 16px;
+    color: #24292e;
+    font-size: 14px;
+    font-weight: 500;
+    text-align: center;
+}
+
+.confirm-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+}
+
+.confirm-buttons button {
+    min-width: 60px;
+    min-height: 32px;
+    padding: 6px 12px;
+    font-size: 13px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.confirm-yes {
+    background-color: #d73a49 !important;
+    color: white !important;
+    border: none !important;
+}
+
+.confirm-yes:hover {
+    background-color: #cb2431 !important;
+}
+
+.confirm-no {
+    background-color: #e1e4e8 !important;
+    color: #24292e !important;
+    border: 1px solid #e1e4e8 !important;
+}
+
+.confirm-no:hover {
+    background-color: #d1d5da !important;
+}
+
+/* Logo 样式 */
+.logo-title {
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.github-link {
+    display: flex;
+    align-items: center;
+    color: #24292e;
+    text-decoration: none;
+    transition: color 0.2s ease;
+}
+
+.github-link:hover {
+    color: #0366d6;
+}
+
+.github-icon {
+    display: block;
+}
+
+.logo-title small {
+    font-size: 14px;
+    font-weight: 500;
+    background: linear-gradient(135deg, #2188ff, #804eda);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: 0.3px;
+}
+
+.token-notice {
+    margin-top: 8px;
+    font-size: 12px;
+    color: #6e7781;
+    line-height: 1.4;
+}

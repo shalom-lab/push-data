@@ -1,0 +1,199 @@
+name: Build and Release Extensions
+
+on:
+  push:
+    tags:
+      - 'v*' # 当推送版本标签时触发
+  workflow_dispatch: # 添加手动触发选项
+    inputs:
+      version:
+        description: '版本号 (例如: v1.0.0)'
+        required: true
+        default: 'v1.0.0'
+      release:
+        description: '是否发布到商店'
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install dependencies
+        run: |
+          echo "Installing dependencies..."
+          sudo apt-get update
+          sudo apt-get install -y jq
+          
+      - name: Install web-ext
+        run: |
+          echo "Installing web-ext globally..."
+          sudo npm install --global web-ext
+
+      - name: Get version
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ github.event.inputs.version }}"
+          else
+            VERSION="${GITHUB_REF#refs/tags/}"
+          fi
+          # 移除版本号前缀 'v'
+          CLEAN_VERSION="${VERSION#v}"
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "CLEAN_VERSION=$CLEAN_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Update manifest version
+        run: |
+          echo "Updating manifest version to ${{ steps.get_version.outputs.CLEAN_VERSION }}..."
+          # 首先尝试使用jq更新manifest.json中的版本号
+          if command -v jq &> /dev/null; then
+            jq ".version=\"${{ steps.get_version.outputs.CLEAN_VERSION }}\"" manifest.json > manifest.json.tmp
+            if [ $? -eq 0 ]; then
+              mv manifest.json.tmp manifest.json
+            else
+              echo "jq处理失败，使用sed作为备选方案"
+              sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${{ steps.get_version.outputs.CLEAN_VERSION }}\"/" manifest.json
+            fi
+          else
+            echo "未找到jq，使用sed更新版本号"
+            sed -i "s/\"version\": \"[^\"]*\"/\"version\": \"${{ steps.get_version.outputs.CLEAN_VERSION }}\"/" manifest.json
+          fi
+          
+          # 验证版本是否已更新
+          echo "Updated manifest.json:"
+          grep "\"version\"" manifest.json
+
+      - name: Prepare Firefox manifest
+        run: |
+          echo "Creating Firefox manifest..."
+          cp manifest.json manifest.firefox.json
+          sed -i 's/"manifest_version": 3/"manifest_version": 2/' manifest.firefox.json
+          sed -i 's/"action"/"browser_action"/' manifest.firefox.json
+          sed -i 's/"service_worker"/"scripts"/' manifest.firefox.json
+          sed -i 's/"host_permissions"/"permissions"/' manifest.firefox.json
+          sed -i 's/"_execute_action"/"_execute_browser_action"/' manifest.firefox.json
+          # Add Firefox specific settings
+          sed -i '/"name"/ a\    "browser_specific_settings": {\n      "gecko": {\n        "id": "github-data-push@extensions",\n        "strict_min_version": "57.0"\n      }\n    },' manifest.firefox.json
+
+      - name: Build Chrome extension
+        run: |
+          echo "Building Chrome extension..."
+          mkdir -p dist/chrome
+          cp -r popup.* i18n.js icons styles.css background.js manifest.json dist/chrome/
+          cd dist/chrome
+          zip -r ../chrome-github-data-push-${{ steps.get_version.outputs.VERSION }}.zip .
+
+      - name: Build Firefox extension
+        run: |
+          echo "Building Firefox extension..."
+          mkdir -p dist/firefox
+          cp -r popup.* i18n.js icons styles.css background.js manifest.firefox.json dist/firefox/
+          mv dist/firefox/manifest.firefox.json dist/firefox/manifest.json
+          cd dist/firefox
+          echo "Current directory contents:"
+          ls -la
+          echo "Building web-ext..."
+          web-ext build --artifacts-dir ../ --overwrite-dest
+          cd ..
+          echo "Dist directory contents:"
+          ls -la
+          # Find and rename the Firefox extension zip file (handle both hyphen and underscore patterns)
+          FIREFOX_ZIP=$(find . -name "github[-_]data[-_]push-*.zip" ! -name "*-chrome.zip")
+          if [ -n "$FIREFOX_ZIP" ]; then
+            echo "Found Firefox extension: $FIREFOX_ZIP"
+            mv "$FIREFOX_ZIP" "firefox-github-data-push-${{ steps.get_version.outputs.VERSION }}.xpi"
+            echo "After renaming:"
+            ls -la
+          else
+            echo "Error: No Firefox extension zip file found!"
+            exit 1
+          fi
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        if: ${{ github.event_name != 'workflow_dispatch' || (github.event_name == 'workflow_dispatch' && !github.event.inputs.release) }}
+        with:
+          files: |
+            dist/chrome-github-data-push-${{ steps.get_version.outputs.VERSION }}.zip
+            dist/firefox-github-data-push-${{ steps.get_version.outputs.VERSION }}.xpi
+          name: Release ${{ steps.get_version.outputs.VERSION }}
+          body: |
+            ## GitHub Data Push ${{ steps.get_version.outputs.VERSION }}
+            
+            ### 🌐 支持的浏览器 / Supported Browsers
+            - Chrome/Edge (Manifest V3)
+            - Firefox (Manifest V2)
+            
+            ### 📦 下载说明 / Download Instructions
+            
+            #### Chrome/Edge:
+            1. 下载 `chrome-github-data-push-[版本号].zip`
+            2. 访问 `chrome://extensions`
+            3. 开启"开发者模式"
+            4. 点击"加载已解压的扩展程序"
+            5. 选择解压后的文件夹
+            
+            #### Firefox:
+            1. 下载 `firefox-github-data-push-[版本号].xpi`
+            2. 访问 `about:addons`
+            3. 点击齿轮图标，选择"从文件安装附加组件"
+            4. 选择下载的 `.xpi` 文件
+            
+            ### 🌍 支持的语言 / Supported Languages
+            - 简体中文 (Chinese Simplified)
+            - English
+            - 日本語 (Japanese)
+            - 한국어 (Korean)
+            - Français (French)
+            - Deutsch (German)
+            - Español (Spanish)
+            
+            ### 📝 功能特点 / Features
+            - ✨ 自定义数据模板
+            - 🔄 多语言支持
+            - 🔒 安全的 Token 管理
+            - 📁 灵活的数据存储
+            - 🎨 直观的用户界面
+            
+            ### 💡 使用提示 / Usage Tips
+            1. 首次使用请在设置中配置 GitHub Token
+            2. 选择或创建数据模板
+            3. 选择目标仓库
+            4. 填写并提交数据
+            
+            ### 🔐 隐私说明 / Privacy Notice
+            - Token 仅保存在本地浏览器中
+            - 所有数据传输均使用 GitHub API 加密通道
+
+      # 商店发布任务 (仅在手动触发且选择发布时执行)
+      - name: Upload to Chrome Web Store
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' }}
+        uses: mnao305/chrome-extension-upload@v4.0.1
+        with:
+          file-path: dist/chrome-github-data-push-${{ steps.get_version.outputs.VERSION }}.zip
+          extension-id: ${{ secrets.CHROME_EXTENSION_ID }}
+          client-id: ${{ secrets.CHROME_CLIENT_ID }}
+          client-secret: ${{ secrets.CHROME_CLIENT_SECRET }}
+          refresh-token: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          
+      - name: Upload to Firefox Add-ons
+        if: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.release == 'true' }}
+        uses: trmcnvn/firefox-addon@v1
+        with:
+          uuid: ${{ secrets.FIREFOX_ADDON_ID }}
+          xpi: dist/firefox-github-data-push-${{ steps.get_version.outputs.VERSION }}.xpi
+          manifest: dist/firefox/manifest.json
+          api-key: ${{ secrets.FIREFOX_API_KEY }}
+          api-secret: ${{ secrets.FIREFOX_API_SECRET }} 

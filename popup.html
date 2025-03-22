@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="main" style="display: none;">
+        <div class="settings-header">
+            <h3 class="logo-title" id="logo">
+                <a href="https://github.com/shalom-lab/push-data" target="_blank" class="github-link">
+                    <svg height="20" viewBox="0 0 16 16" width="20" class="github-icon">
+                        <path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"></path>
+                    </svg>
+                </a>
+                <small>Push data with ease</small>
+            </h3>
+            <button id="openSettings" style="margin-left: auto;">
+                ⚙️ 设置
+            </button>
+        </div>
+
+        <!-- 添加 Token 未配置时的提示 -->
+        <div id="noTokenTip" class="notice" style="display: none;">
+            <p>👋 欢迎使用 GitHub Data Push</p>
+            <p>请先点击右上角 ⚙️ 设置按钮，配置您的 GitHub Token</p>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div id="mainContent" style="display: none;">
+            <div class="form-group">
+                <label>选择仓库:</label>
+                <select id="repoList">
+                    <option value="">请选择仓库</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>选择模板:</label>
+                <select id="templateSelect">
+                    <option value="">请选择模板</option>
+                </select>
+                <div id="templatePreview" class="template-preview"></div>
+            </div>
+
+            <div id="formFields">
+                <!-- 动态生成的表单字段将显示在这里 -->
+            </div>
+
+            <button id="submit">提交数据</button>
+        </div>
+    </div>
+
+    <div id="settings" style="display: none;">
+        <div class="settings-header">
+            <h3></h3>
+            <button id="backToMain">返回</button>
+        </div>
+
+        <div class="settings-container">
+            <!-- 模板管理 -->
+            <div class="settings-item">
+                <div class="settings-item-header">
+                    <h4>模板管理</h4>
+                    <div class="template-buttons">
+                        <button id="importTemplates">导入</button>
+                        <button id="exportTemplates">导出</button>
+                    </div>
+                </div>
+                <textarea id="templatesEditor" spellcheck="false"></textarea>
+                <button id="saveTemplates" class="full-width">保存模板</button>
+                <input type="file" id="importTemplatesFile" accept=".json" style="display: none;">
+            </div>
+
+            <!-- Token 设置 -->
+            <div class="settings-item token-section">
+                <div class="settings-item-header">
+                    <h4>GitHub Token</h4>
+                </div>
+                <div class="token-input-group">
+                    <input type="password" id="settingsToken" placeholder="输入 Token">
+                    <div class="token-buttons">
+                        <button id="settingsSaveToken">更新</button>
+                        <button id="settingsResetToken" class="danger">重置</button>
+                    </div>
+                </div>
+                <div class="token-notice"></div>
+            </div>
+
+            <!-- 语言设置 -->
+            <div class="settings-item">
+                <div class="settings-item-header">
+                    <h4>语言设置 / Language</h4>
+                </div>
+                <div class="language-select-group">
+                    <select id="languageSelect">
+                        <option value="zh">中文</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 简化提示框的 HTML 结构 -->
+    <div id="toast" class="toast">
+        <span id="toastMessage"></span>
+    </div>
+
+    <script src="i18n.js"></script>
+    <script src="popup.js"></script>
+</body>
+</html> 

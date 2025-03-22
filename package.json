@@ -1,0 +1,28 @@
+{
+  "name": "github-data-push",
+  "version": "1.0.0",
+  "description": "Push data to GitHub repository with customizable templates",
+  "scripts": {
+    "build": "echo 'No build step required'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shalom-lab/push-data.git"
+  },
+  "keywords": [
+    "browser-extension",
+    "chrome-extension",
+    "firefox-addon",
+    "github",
+    "data-management",
+    "template"
+  ],
+  "author": "shalom-lab",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/shalom-lab/push-data/issues"
+  },
+  "homepage": "https://github.com/shalom-lab/push-data#readme",
+  "dependencies": {},
+  "devDependencies": {}
+} 
