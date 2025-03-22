@@ -799,7 +799,8 @@ async function appendToJsonFile(repoFullName, formData, token) {
                 console.log('文件不存在，将创建新文件');
                 existingData = [];
             } else {
-                throw new Error('检查文件状态失败');
+                //throw new Error('Check file status failed');
+                showToast('Check file status failed', 'error');
             }
         } catch (error) {
             if (error.message !== '文件不存在，将创建新文件') {
@@ -838,14 +839,15 @@ async function appendToJsonFile(repoFullName, formData, token) {
 
         if (!response.ok) {
             const errorData = await response.json();
-            throw new Error(errorData.message || '提交失败');
+            //  throw new Error(errorData.message || '提交失败'); 
+            showToast(errorData.message || 'Submit failed', 'error');
         }
 
         return true;
     } catch (error) {
         //console.error('提交失败:', error);
         showToast(error.message, 'error');
-        throw error;
+        // throw error;
     }
 }
 
@@ -938,7 +940,8 @@ async function loadRepos() {
         });
 
         if (!response.ok) {
-            throw new Error(t('error.loadRepos'));
+            //throw new Error(t('error.loadRepos'));
+            showToast(t('error.loadRepos'), 'error');
         }
 
         const repos = await response.json();
@@ -1071,13 +1074,16 @@ function initializeSettings() {
 function validateTemplates(templates) {
     for (const [key, template] of Object.entries(templates)) {
         if (!template.name || typeof template.name !== 'string') {
-            throw new Error(`模板 ${key} 缺少 name 属性`);
+            //throw new Error(`模板 ${key} 缺少 name 属性`);
+            showToast(`Template ${key} missing name property`, 'error');
         }
         if (!template.fields || typeof template.fields !== 'object') {
-            throw new Error(`模板 ${key} 缺少 fields 属性`);
+            //throw new Error(`模板 ${key} 缺少 fields 属性`);
+            showToast(`Template ${key} missing fields property`, 'error');
         }
         if (!template.filename || typeof template.filename !== 'string') {
-            throw new Error(`模板 ${key} 缺少 filename 属性`);
+            //throw new Error(`模板 ${key} 缺少 filename 属性`);
+            showToast(`Template ${key} missing filename property`, 'error');
         }
         if (!template.fieldOrder || !Array.isArray(template.fieldOrder)) {
             // 如果没有 fieldOrder，自动生成一个
@@ -1086,13 +1092,15 @@ function validateTemplates(templates) {
         // 验证 fieldOrder 中的字段都存在于 fields 中
         for (const fieldName of template.fieldOrder) {
             if (!template.fields[fieldName]) {
-                throw new Error(`模板 ${key} 的 fieldOrder 包含未定义的字段: ${fieldName}`);
+                //throw new Error(`Template ${key} fieldOrder contains undefined field: ${fieldName}`);
+                showToast(`Template ${key} fieldOrder contains undefined field: ${fieldName}`, 'error');
             }
         }
         // 验证所有 fields 中的字段都在 fieldOrder 中
         for (const fieldName of Object.keys(template.fields)) {
             if (!template.fieldOrder.includes(fieldName)) {
-                throw new Error(`模板 ${key} 的字段 ${fieldName} 未包含在 fieldOrder 中`);
+                //throw new Error(`Template ${key} field ${fieldName} not in fieldOrder`);
+                showToast(`Template ${key} field ${fieldName} not in fieldOrder`, 'error');
             }
         }
     }
