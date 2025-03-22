@@ -667,7 +667,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         element.value = field.default || '';
                     } else if (field.type === 'array') {
                         // 处理数组类型字段
-                        element.value = JSON.stringify(field.default || []);
+                        element.value = JSON.stringify(field.default || '');
                         // 更新数组显示（如果有标签容器）
                         const tagsContainer = element.parentElement.querySelector('.tags-container');
                         if (tagsContainer) {
