@@ -30,14 +30,14 @@ A browser extension that helps you push data to GitHub repositories using custom
 ## 📦 Installation
 
 ### Chrome/Edge
-1. Download `github-data-push-chrome.zip` from the [latest release](../../releases/latest)
+1. Download `chrome-github-data-push.zip` from the [latest release](../../releases/latest)
 2. Unzip the file
 3. Go to Chrome/Edge extensions page
 4. Enable "Developer mode"
 5. Click "Load unpacked" and select the unzipped folder
 
 ### Firefox
-1. Download `github-data-push-firefox.xpi` from the [latest release](../../releases/latest)
+1. Download `firefox-github-data-push.xpi` from the [latest release](../../releases/latest)
 2. Open Firefox
 3. Go to `about:addons`
 4. Click the gear icon and select "Install Add-on From File"

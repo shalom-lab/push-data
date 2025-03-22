@@ -30,14 +30,14 @@
 ## 📦 安装方法
 
 ### Chrome/Edge
-1. 从[最新发布](../../releases/latest)下载 `github-data-push-chrome.zip`
+1. 从[最新发布](../../releases/latest)下载 `chrome-github-data-push.zip`
 2. 解压文件
 3. 打开 Chrome/Edge 扩展页面
 4. 启用"开发者模式"
 5. 点击"加载已解压的扩展程序"并选择解压后的文件夹
 
 ### Firefox
-1. 从[最新发布](../../releases/latest)下载 `github-data-push-firefox.xpi`
+1. 从[最新发布](../../releases/latest)下载 `firefox-github-data-push.xpi`
 2. 打开 Firefox
 3. 访问 `about:addons`
 4. 点击齿轮图标，选择"从文件安装附加组件"
