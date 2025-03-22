@@ -1,6 +1,7 @@
 let TEMPLATES = {
     "my-project": {
         name: "🚀 我的项目",
+        filename: 'data-raw/projects.json',
         fieldOrder: ['title', 'link', 'description', 'category', 'tags'],
         fields: {
             title: { type: 'text', label: '项目名称' },
@@ -9,16 +10,16 @@ let TEMPLATES = {
             tags: {
                 type: 'array',
                 label: '标签',
-                placeholder: '输入标签后按回车',
+                placeholder: '输入标签后按回车或空格',
                 default: [],
-                required: false 
+                required: false
             },
             category: { type: 'text', label: '项目分类' }
-        },
-        filename: 'data-raw/projects.json'
+        }
     },
     field_types: {
         name: "🔎 模板示例",
+        filename: 'data-raw/examples.json',
         fieldOrder: ['text_example', 'textarea_example', 'select_example', 'date_example', 'number_example', 'checkbox_example', 'radio_example', 'array_example'],
         fields: {
             text_example: {
@@ -66,12 +67,11 @@ let TEMPLATES = {
             array_example: {
                 type: 'array',
                 label: '标签',
-                placeholder: '输入标签后按回车',
+                placeholder: '输入标签后按回车或空格',
                 default: [],
                 required: true
             }
-        },
-        filename: 'data-raw/examples.json'
+        }
     }
 };
 
@@ -379,8 +379,10 @@ function generateFormFields(templateName) {
             input = document.createElement('textarea');
             input.rows = 4;
             input.value = field.default || '';
+            input.id = fieldName; // 确保设置 ID
         } else if (field.type === 'select' && Array.isArray(field.options)) {
             input = document.createElement('select');
+            input.id = fieldName; // 确保设置 ID
             // 添加一个默认选项
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
@@ -406,6 +408,7 @@ function generateFormFields(templateName) {
 
             input = document.createElement('input');
             input.type = 'checkbox';
+            input.id = fieldName; // 确保设置 ID
             input.style.width = 'auto';
             input.checked = field.default || false;
 
@@ -452,7 +455,7 @@ function generateFormFields(templateName) {
             });
 
             div.appendChild(wrapper);
-            input = wrapper.querySelector('input'); // 获取第一个单选按钮用于ID设置
+            // 不需要为radio组设置统一ID，每个单选按钮已有自己的ID
         } else if (field.type === 'array') {
             const wrapper = document.createElement('div');
             wrapper.className = 'array-wrapper';
@@ -476,13 +479,16 @@ function generateFormFields(templateName) {
             // 创建输入框
             input = document.createElement('input');
             input.type = 'text';
-            input.placeholder = field.placeholder || '输入后按回车添加';
+            input.className = 'array-text-input'; // 添加类名以便于后续查找
+            input.placeholder = field.placeholder || '输入后按回车或空格添加';
             input.style.flex = '1';
+            input.id = `${fieldName}_input`; // 设置一个不同的ID以避免冲突
 
             // 创建隐藏的实际值存储
             const hiddenInput = document.createElement('input');
             hiddenInput.type = 'hidden';
-            hiddenInput.id = fieldName;
+            hiddenInput.id = fieldName; // 确保隐藏输入框使用字段名作为ID
+            hiddenInput.className = 'array-hidden-input'; // 添加类名以便于后续查找
             hiddenInput.value = JSON.stringify(field.default || []);
 
             // 更新标签显示
@@ -513,9 +519,12 @@ function generateFormFields(templateName) {
                     // 删除标签事件
                     tagElement.querySelector('.remove-tag').addEventListener('click', () => {
                         const currentTags = JSON.parse(hiddenInput.value);
-                        currentTags.splice(index, 1);
-                        hiddenInput.value = JSON.stringify(currentTags);
-                        updateTags();
+                        const tagIndex = currentTags.indexOf(tag);
+                        if (tagIndex !== -1) {
+                            currentTags.splice(tagIndex, 1);
+                            hiddenInput.value = JSON.stringify(currentTags);
+                            tagElement.remove();
+                        }
                     });
 
                     tagsContainer.appendChild(tagElement);
@@ -524,8 +533,9 @@ function generateFormFields(templateName) {
 
             // 添加标签事件
             input.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter') {
-                    e.preventDefault();
+                // 处理回车键和空格键
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault(); // 阻止默认行为
                     const value = input.value.trim();
                     if (value) {
                         const currentTags = JSON.parse(hiddenInput.value);
@@ -552,12 +562,14 @@ function generateFormFields(templateName) {
             input = document.createElement('input');
             input.type = field.type || 'text';
             input.value = field.default || '';
+            input.id = fieldName; // 确保设置 ID
         }
 
-        input.id = fieldName;
+        // 如果div中还没有任何输入元素，则添加
         if (!div.querySelector('input, textarea, select')) {
             div.appendChild(input);
         }
+
         formFields.appendChild(div);
     });
 }
@@ -611,33 +623,159 @@ document.addEventListener('DOMContentLoaded', async () => {
                 currentTemplate.fields[fieldName]
             ]);
 
+            console.log('fieldEntries:', fieldEntries);
+
             for (const [fieldName, field] of fieldEntries) {
+                console.log('fieldName:', fieldName);
+                console.log('field:', field);
                 const element = document.getElementById(fieldName);
+                console.log('element:', element);
                 let value;
 
                 // 设置默认的required属性
                 field.required = field.required ?? true; // 如果未指定required，默认为true
 
-                if (field.type === 'checkbox') {
-                    value = element.checked;
+                // 如果元素不存在，记录错误并使用默认值
+                if (!element && field.type !== 'array') {
+                    console.error(`元素 ${fieldName} (类型: ${field.type}) 未找到，使用默认值`);
+
+                    // 根据字段类型设置默认值
+                    if (field.type === 'checkbox') {
+                        value = field.default || false;
+                    } else if (field.type === 'number') {
+                        value = field.default || 0;
+                    } else if (field.type === 'select' || field.type === 'radio') {
+                        value = field.default || '';
+                    } else {
+                        value = field.default || '';
+                    }
+                } else if (field.type === 'text' || field.type === 'date' || field.type === 'textarea' || field.type === 'select') {
+                    // 文本类型字段
+                    value = element ? element.value : (field.default || '');
+                } else if (field.type === 'checkbox') {
+                    // 复选框类型
+                    value = element ? element.checked : (field.default || false);
                 } else if (field.type === 'radio') {
+                    // 单选按钮类型
                     const checkedRadio = document.querySelector(`input[name="${fieldName}"]:checked`);
-                    value = checkedRadio ? checkedRadio.value : '';
+                    value = checkedRadio ? checkedRadio.value : (field.default || '');
                 } else if (field.type === 'number') {
-                    // 对数字类型进行特殊处理
-                    value = element.value === '' ? '' : Number(element.value);
+                    // 数字类型字段
+                    const rawValue = element ? element.value : '';
+                    value = rawValue === '' ? (field.default || 0) : Number(rawValue);
+                } else if (field.type === 'array') {
+                    console.log(`处理数组字段 ${fieldName}:`, {
+                        fieldType: field.type,
+                        fieldLabel: field.label,
+                        fieldRequired: field.required
+                    });
+                    // 对于数组类型，尝试多种方式找到隐藏输入元素
+                    try {
+                        // 首先尝试通过ID直接获取
+                        console.log(`尝试通过ID获取${fieldName}`, field.type);
+                        let hiddenInput = document.getElementById(fieldName);
+
+                        console.log(`尝试通过ID获取${fieldName}`, hiddenInput);
+                        // 如果找不到，尝试通过类名和选择器查找
+                        if (!hiddenInput) {
+                            console.log(`通过ID未找到${fieldName}，尝试其他方式查找...`);
+
+                            // 查找带有该ID的隐藏输入元素
+                            hiddenInput = document.querySelector(`input[type="hidden"][id="${fieldName}"]`);
+
+                            // 如果还是找不到，尝试匹配类名
+                            if (!hiddenInput) {
+                                const arrayHiddenInputs = document.querySelectorAll('input.array-hidden-input');
+                                console.log(`找到 ${arrayHiddenInputs.length} 个array-hidden-input元素`);
+
+                                // 打印所有找到的隐藏输入元素，帮助调试
+                                arrayHiddenInputs.forEach(input => {
+                                    console.log(`- 隐藏输入元素:`, {
+                                        id: input.id,
+                                        value: input.value.substring(0, 30) + (input.value.length > 30 ? '...' : '')
+                                    });
+                                });
+
+                                // 尝试通过ID匹配
+                                hiddenInput = Array.from(arrayHiddenInputs).find(input => input.id === fieldName);
+                            }
+                        }
+
+                        // 如果找到了隐藏输入元素
+                        if (hiddenInput) {
+                            console.log(`成功找到隐藏输入元素 ${fieldName}:`, {
+                                id: hiddenInput.id,
+                                value: hiddenInput.value
+                            });
+
+                            try {
+                                // 尝试解析JSON数据
+                                value = JSON.parse(hiddenInput.value);
+                                if (!Array.isArray(value)) {
+                                    console.warn(`字段 ${fieldName} 的值不是数组，设置为空数组`);
+                                    value = [];
+                                }
+                                console.log(`解析后的标签数组:`, value);
+                            } catch (e) {
+                                console.error(`解析字段 ${fieldName} 的JSON失败:`, e);
+                                value = [];
+                            }
+                        } else {
+                            // 备用方案：直接从页面上查找字段对应的可见标签元素
+                            console.log(`无法找到隐藏输入元素 ${fieldName}，尝试收集可见标签...`);
+
+                            // 在这里可以添加备用方案，比如从页面上查找tag元素直接构建数组
+                            const tagElements = document.querySelectorAll('.tag');
+                            if (tagElements.length > 0) {
+                                const visibleTags = [];
+                                tagElements.forEach(tag => {
+                                    // 获取标签文本（去除删除按钮）
+                                    const tagText = tag.textContent.trim().replace('×', '').trim();
+                                    if (tagText) visibleTags.push(tagText);
+                                });
+
+                                if (visibleTags.length > 0) {
+                                    console.log(`从页面收集到 ${visibleTags.length} 个可见标签:`, visibleTags);
+                                    value = visibleTags;
+                                } else {
+                                    console.warn(`未能收集到任何可见标签，使用默认值`);
+                                    value = field.default || [];
+                                }
+                            } else {
+                                console.warn(`未找到ID为${fieldName}的隐藏输入元素，且页面上没有可见标签，使用默认值`);
+                                value = field.default || [];
+                            }
+                        }
+                    } catch (e) {
+                        console.error(`处理数组字段 ${fieldName} 时出错:`, e);
+                        value = field.default || []; // 出错时使用默认值
+                    }
                 } else {
-                    value = element.value;
+                    // 其他未知类型，直接使用元素值或默认值
+                    value = element ? element.value : (field.default || '');
                 }
 
                 // 检查必填字段
-                if (field.required && (value === '' || value === null || value === undefined)) {
-                    const fieldLabel = field.label;
-                    showToast(t('error.fieldRequired').replace('{field}', fieldLabel), 'error');
-                    return;
+                if (field.required) {
+                    if (field.type === 'array') {
+                        // 对于数组类型，直接检查数组长度
+                        if (!Array.isArray(value) || value.length === 0) {
+                            const fieldLabel = field.label;
+                            showToast(t('error.fieldRequired').replace('{field}', fieldLabel), 'error');
+                            return;
+                        }
+                    } else if (value === '' || value === null || value === undefined) {
+                        // 其他类型字段的常规验证
+                        const fieldLabel = field.label;
+                        showToast(t('error.fieldRequired').replace('{field}', fieldLabel), 'error');
+                        return;
+                    }
                 }
                 formData[fieldName] = value;
             }
+
+            // 调试输出表单数据
+            console.log('提交的表单数据:', JSON.stringify(formData, null, 2));
 
             try {
                 const settings = await chrome.storage.local.get(['github_token']);
@@ -654,8 +792,15 @@ document.addEventListener('DOMContentLoaded', async () => {
                 // 清空表单
                 fieldEntries.forEach(([fieldName, field]) => {
                     const element = document.getElementById(fieldName);
+
+                    // 如果元素不存在，跳过重置
+                    if (!element && field.type !== 'array') {
+                        console.warn(`重置表单: 元素 ${fieldName} 不存在，无法重置`);
+                        return; // 跳过当前循环
+                    }
+
                     if (field.type === 'checkbox') {
-                        element.checked = field.default || false;
+                        if (element) element.checked = field.default || false;
                     } else if (field.type === 'radio') {
                         const radios = document.querySelectorAll(`input[name="${fieldName}"]`);
                         radios.forEach(radio => radio.checked = false);
@@ -664,17 +809,73 @@ document.addEventListener('DOMContentLoaded', async () => {
                             if (defaultRadio) defaultRadio.checked = true;
                         }
                     } else if (field.type === 'select') {
-                        element.value = field.default || '';
+                        if (element) element.value = field.default || '';
                     } else if (field.type === 'array') {
-                        // 处理数组类型字段
-                        element.value = JSON.stringify(field.default || '');
-                        // 更新数组显示（如果有标签容器）
-                        const tagsContainer = element.parentElement.querySelector('.tags-container');
-                        if (tagsContainer) {
-                            tagsContainer.innerHTML = '';
+                        // 处理数组类型字段 - 重置为默认值
+                        const hiddenInput = document.getElementById(fieldName);
+                        if (hiddenInput) {
+                            // 重置隐藏输入框的值为默认数组
+                            hiddenInput.value = JSON.stringify(field.default || []);
+
+                            // 找到包含标签容器的父元素
+                            const arrayWrapper = hiddenInput.closest('.array-wrapper');
+                            if (arrayWrapper) {
+                                // 清空标签容器
+                                const tagsContainer = arrayWrapper.querySelector('.tags-container');
+                                if (tagsContainer) {
+                                    tagsContainer.innerHTML = '';
+                                }
+
+                                // 如果有默认标签，重新渲染
+                                const defaultTags = field.default || [];
+                                if (defaultTags.length > 0) {
+                                    // 重新渲染默认标签
+                                    defaultTags.forEach(tag => {
+                                        const tagElement = document.createElement('span');
+                                        tagElement.className = 'tag';
+                                        tagElement.style.backgroundColor = '#e1e4e8';
+                                        tagElement.style.borderRadius = '4px';
+                                        tagElement.style.padding = '4px 8px';
+                                        tagElement.style.fontSize = '12px';
+                                        tagElement.style.display = 'flex';
+                                        tagElement.style.alignItems = 'center';
+                                        tagElement.style.gap = '4px';
+
+                                        tagElement.innerHTML = `
+                                            ${tag}
+                                            <span class="remove-tag" style="
+                                                cursor: pointer;
+                                                color: #666;
+                                                font-weight: bold;
+                                                font-size: 14px;
+                                            ">×</span>
+                                        `;
+
+                                        // 删除标签事件
+                                        tagElement.querySelector('.remove-tag').addEventListener('click', () => {
+                                            const currentTags = JSON.parse(hiddenInput.value);
+                                            const tagIndex = currentTags.indexOf(tag);
+                                            if (tagIndex !== -1) {
+                                                currentTags.splice(tagIndex, 1);
+                                                hiddenInput.value = JSON.stringify(currentTags);
+                                                tagElement.remove();
+                                            }
+                                        });
+
+                                        tagsContainer.appendChild(tagElement);
+                                    });
+                                }
+
+                                // 清空输入框
+                                const textInput = arrayWrapper.querySelector('input[type="text"]');
+                                if (textInput) {
+                                    textInput.value = '';
+                                }
+                            }
                         }
                     } else {
-                        element.value = field.default || '';
+                        // 其他类型字段
+                        if (element) element.value = field.default || '';
                     }
                 });
 
@@ -684,14 +885,14 @@ document.addEventListener('DOMContentLoaded', async () => {
                 submitButton.textContent = originalText;
             } catch (error) {
                 //console.error('提交失败:', error);
-                
+
                 // 特殊处理 "Resource not accessible by personal access token" 错误
                 if (error.message.includes('Resource not accessible by personal access token')) {
                     showToast(t('error.accessDenied') || '权限不足，无法访问该资源。请确保您的Token有足够权限或选择其他仓库。', 'error');
                 } else {
                     showToast(error.message, 'error');
                 }
-                
+
                 // 恢复按钮状态
                 submitButton.disabled = false;
                 submitButton.classList.remove('loading');
@@ -958,6 +1159,69 @@ async function loadRepos() {
     }
 }
 
+// 格式化JSON字符串时保留键的顺序
+function formatJSON(obj, indent = 2) {
+    // 针对模板格式的特殊处理
+    if (typeof obj === 'object' && obj !== null) {
+        const isArray = Array.isArray(obj);
+        
+        // 数组直接格式化
+        if (isArray) {
+            const formattedItems = obj.map(item => formatJSON(item, indent)).join(',\n');
+            return `[\n${' '.repeat(indent)}${formattedItems}\n]`;
+        }
+        
+        // 对象需要特殊处理以保留顺序
+        let result = '{\n';
+        
+        // 模板对象的标准字段顺序
+        const standardTemplateOrder = ['name', 'filename', 'fieldOrder', 'fields'];
+        
+        // 处理模板对象 - 首先检查是否是模板对象
+        const isTemplateObj = obj.name && obj.filename && obj.fieldOrder && obj.fields;
+        
+        if (isTemplateObj) {
+            // 按照标准模板字段顺序处理
+            standardTemplateOrder.forEach((key, index) => {
+                if (key in obj) {
+                    const value = obj[key];
+                    const comma = index < standardTemplateOrder.length - 1 ? ',' : '';
+                    
+                    // 特殊处理fields字段，按fieldOrder排序
+                    if (key === 'fields' && typeof value === 'object' && value !== null && obj.fieldOrder) {
+                        result += `${' '.repeat(indent)}"${key}": {\n`;
+                        
+                        // 按fieldOrder排序字段
+                        obj.fieldOrder.forEach((fieldName, fieldIndex) => {
+                            if (value[fieldName]) {
+                                const fieldComma = fieldIndex < obj.fieldOrder.length - 1 ? ',' : '';
+                                result += `${' '.repeat(indent * 2)}"${fieldName}": ${formatJSON(value[fieldName], indent * 2)}${fieldComma}\n`;
+                            }
+                        });
+                        
+                        result += `${' '.repeat(indent)}}${comma}\n`;
+                    } else {
+                        result += `${' '.repeat(indent)}"${key}": ${formatJSON(value, indent * 2)}${comma}\n`;
+                    }
+                }
+            });
+        } else {
+            // 对于非模板对象，保持原始定义顺序
+            const entries = Object.entries(obj);
+            entries.forEach(([key, value], index) => {
+                const comma = index < entries.length - 1 ? ',' : '';
+                result += `${' '.repeat(indent)}"${key}": ${formatJSON(value, indent * 2)}${comma}\n`;
+            });
+        }
+        
+        result += '}';
+        return result;
+    }
+    
+    // 基本类型直接使用JSON.stringify
+    return JSON.stringify(obj);
+}
+
 // 设置面板相关功能
 function initializeSettings() {
     const mainDiv = document.getElementById('main');
@@ -968,8 +1232,31 @@ function initializeSettings() {
     document.getElementById('openSettings').addEventListener('click', () => {
         mainDiv.style.display = 'none';
         settingsDiv.style.display = 'block';
-        // 加载当前模板到编辑器
-        templatesEditor.value = JSON.stringify(TEMPLATES, null, 2);
+
+        // 优先使用保存的文本格式
+        if (window.savedTemplatesText) {
+            templatesEditor.value = window.savedTemplatesText;
+            return;
+        }
+
+        // 否则使用自定义格式化函数加载当前模板到编辑器，保持字段顺序
+        try {
+            // 对每个模板应用格式化
+            let formattedTemplates = '{\n';
+            const templates = Object.entries(TEMPLATES);
+
+            templates.forEach(([templateKey, templateValue], index) => {
+                const comma = index < templates.length - 1 ? ',' : '';
+                formattedTemplates += `  "${templateKey}": ${formatJSON(templateValue, 4).replace(/\n/g, '\n  ')}${comma}\n`;
+            });
+
+            formattedTemplates += '}';
+            templatesEditor.value = formattedTemplates;
+        } catch (error) {
+            console.error('格式化模板时出错:', error);
+            // 出错时回退到标准JSON格式化
+            templatesEditor.value = JSON.stringify(TEMPLATES, null, 2);
+        }
     });
 
     // 返回主界面
@@ -981,15 +1268,43 @@ function initializeSettings() {
     // 保存模板
     document.getElementById('saveTemplates').addEventListener('click', async () => {
         try {
-            const newTemplates = JSON.parse(templatesEditor.value);
+            // 直接使用编辑器中的文本，这样可以保持用户编辑的格式和顺序
+            const templateText = templatesEditor.value;
+            const newTemplates = JSON.parse(templateText);
+
             if (Object.keys(newTemplates).length === 0) {
                 await chrome.storage.local.set({ templates: newTemplates });
                 TEMPLATES = {};
                 updateTemplateSelect();
                 showToast(t('templates.success.save'));
             } else if (validateTemplates(newTemplates)) {
-                await chrome.storage.local.set({ templates: newTemplates });
-                TEMPLATES = { ...newTemplates };
+                // 保存原始文本格式到一个额外的字段，以便将来编辑时保持格式
+                await chrome.storage.local.set({
+                    templates: newTemplates,
+                    templatesText: templateText
+                });
+
+                // 确保templates对象中的属性按照标准顺序排列
+                const orderedTemplates = {};
+                Object.keys(newTemplates).forEach(templateKey => {
+                    const template = newTemplates[templateKey];
+                    // 创建一个按照标准顺序排列的模板对象
+                    orderedTemplates[templateKey] = {
+                        name: template.name,
+                        filename: template.filename,
+                        fieldOrder: template.fieldOrder,
+                        fields: {}
+                    };
+                    
+                    // 按照fieldOrder排序fields
+                    template.fieldOrder.forEach(fieldName => {
+                        if (template.fields[fieldName]) {
+                            orderedTemplates[templateKey].fields[fieldName] = template.fields[fieldName];
+                        }
+                    });
+                });
+                
+                TEMPLATES = orderedTemplates;
                 updateTemplateSelect();
                 showToast(t('templates.success.save'));
             }
@@ -1002,13 +1317,19 @@ function initializeSettings() {
     document.getElementById('exportTemplates').addEventListener('click', () => {
         // 获取当前日期，格式为 YYYY-MM-DD
         const today = new Date().toISOString().split('T')[0];
-        const blob = new Blob([templatesEditor.value], { type: 'application/json' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${today}-templates.json`;
-        a.click();
-        URL.revokeObjectURL(url);
+        try {
+            // 直接使用编辑器中的内容，保持用户可能的手动修改
+            const blob = new Blob([templatesEditor.value], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${today}-templates.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('导出模板时出错:', error);
+            showToast(t('templates.error.export') + error.message, 'error');
+        }
     });
 
     // 导入模板
@@ -1024,7 +1345,8 @@ function initializeSettings() {
                 try {
                     const templates = JSON.parse(e.target.result);
                     if (validateTemplates(templates)) {
-                        templatesEditor.value = JSON.stringify(templates, null, 2);
+                        // 直接使用原始字符串保留格式和顺序
+                        templatesEditor.value = e.target.result;
                         showToast(t('templates.success.import'));
                     }
                 } catch (error) {
@@ -1100,9 +1422,34 @@ function validateTemplates(templates) {
 
 // 修改模板加载函数
 async function loadSavedTemplates() {
-    const result = await chrome.storage.local.get(['templates']);
+    const result = await chrome.storage.local.get(['templates', 'templatesText']);
     if (result.templates !== undefined) {
-        TEMPLATES = { ...result.templates };
+        // 确保templates对象中的属性按照标准顺序排列
+        const orderedTemplates = {};
+        Object.keys(result.templates).forEach(templateKey => {
+            const template = result.templates[templateKey];
+            // 创建一个按照标准顺序排列的模板对象
+            orderedTemplates[templateKey] = {
+                name: template.name,
+                filename: template.filename,
+                fieldOrder: template.fieldOrder,
+                fields: {}
+            };
+            
+            // 按照fieldOrder排序fields
+            template.fieldOrder.forEach(fieldName => {
+                if (template.fields[fieldName]) {
+                    orderedTemplates[templateKey].fields[fieldName] = template.fields[fieldName];
+                }
+            });
+        });
+        
+        TEMPLATES = orderedTemplates;
+        
+        // 保存文本格式以便将来编辑时使用
+        if (result.templatesText) {
+            window.savedTemplatesText = result.templatesText;
+        }
     }
 }
 

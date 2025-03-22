@@ -79,13 +79,20 @@ Templates are defined in JSON format:
 ```json
 {
   "name": "Template Name",
-  "fieldOrder": ["field1", "field2"],
+  "fieldOrder": ["field1", "field2", "tags"],
   "fields": {
     "field1": {
       "type": "text",
       "label": "Field Label",
       "required": true,
       "default": "Default Value"
+    },
+    "tags": {
+      "type": "array",
+      "label": "Tags",
+      "placeholder": "Enter tags and press Enter or Space",
+      "default": [],
+      "required": false
     }
   },
   "filename": "data/output.json"
@@ -100,6 +107,13 @@ Supported field types:
 - `number`: Number input
 - `checkbox`: Boolean checkbox
 - `radio`: Radio button group
+- `array`: Tag collection (add tags by pressing Enter or Space)
+
+## 🔄 Recent Updates
+
+- ✅ Added support for adding tags using both Enter and Space keys
+- 🛠 Improved form field handling and error management
+- 🌐 Enhanced multiple language support
 
 ## 🤝 Contributing
 
