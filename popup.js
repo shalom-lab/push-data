@@ -683,7 +683,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 submitButton.classList.remove('loading');
                 submitButton.textContent = originalText;
             } catch (error) {
-                console.error('提交失败:', error);
+                //console.error('提交失败:', error);
                 
                 // 特殊处理 "Resource not accessible by personal access token" 错误
                 if (error.message.includes('Resource not accessible by personal access token')) {
@@ -843,7 +843,8 @@ async function appendToJsonFile(repoFullName, formData, token) {
 
         return true;
     } catch (error) {
-        console.error('提交失败:', error);
+        //console.error('提交失败:', error);
+        showToast(error.message, 'error');
         throw error;
     }
 }
